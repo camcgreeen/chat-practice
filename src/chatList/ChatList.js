@@ -80,6 +80,13 @@ class ChatListComponent extends React.Component {
                       secondary={
                         <React.Fragment>
                           <Typography component="span" color="textPrimary">
+                            {`${this.convertChatListTimestamp(
+                              _chat.messages[_chat.messages.length - 1]
+                                .timestamp
+                            )}: `}
+                            {/* {`${this.convertChatListTimestamp(
+                              1603907520 * 1000
+                            )}: `} */}
                             {
                               // display the first 30 characters of the most recent message
                               // _chat.messages[
@@ -164,6 +171,35 @@ class ChatListComponent extends React.Component {
 
   userIsSender = (chat) =>
     chat.messages[chat.messages.length - 1].sender === this.props.userEmail;
+
+  convertChatListTimestamp = (timestamp) => {
+    if (timestamp) {
+      const dayMs = 86400000;
+      const weekMs = 604800000;
+      const yearMs = 31540000000;
+
+      const difference = Date.now() - timestamp;
+
+      const dateString = new Date(timestamp).toString();
+      const dateArr = dateString.split(" ");
+
+      switch (true) {
+        case difference < dayMs:
+          const hourMinSeconds = dateString.split(" ")[4];
+          const hourMinArr = hourMinSeconds.split(":");
+          const hourMin = [hourMinArr[0], hourMinArr[1]].join(":");
+          return hourMin;
+        case difference < weekMs:
+          return dateString.split(" ")[0];
+        case difference < yearMs:
+          return [dateArr[2], dateArr[1]].join(" ");
+        case difference >= yearMs:
+          return [dateArr[1], dateArr[2], dateArr[3]].join(" ");
+        default:
+          return "";
+      }
+    }
+  };
 }
 
 export default withStyles(styles)(ChatListComponent);

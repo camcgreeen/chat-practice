@@ -16,6 +16,7 @@ class ChatTextBoxComponent extends React.Component {
       // gifRef: null,
       showEmojiPicker: false,
       showGifPicker: false,
+      userTyping: false,
     };
   }
 
@@ -48,6 +49,9 @@ class ChatTextBoxComponent extends React.Component {
           className={classes.chatTextBox}
           autoComplete="off"
           onFocus={this.userClickedInput}
+          onBlur={() => this.setState({ userTyping: false })}
+          // onSubmit={() => this.setState({ userTyping: false })}
+          // onFocusOut={() => this.setState({ userTyping: false })}
           placeholder="Type something..."
           onKeyUp={(e) => this.userTyping(e)}
         ></TextField>
@@ -109,6 +113,54 @@ class ChatTextBoxComponent extends React.Component {
     );
   }
 
+  componentDidUpdate = async (prevProps, prevState) => {
+    const docKey = this.buildDocKey();
+    const docArr = docKey.split(":");
+    // const user = docKey.split(":")[0];
+    console.log(`this.state.email = ${this.props.email}`);
+    const userIndex = docArr.findIndex((elem) => elem === this.props.email);
+    console.log(`userIndex = ${userIndex}`);
+    const chat = await firebase
+      .firestore()
+      .collection("chats")
+      .doc(docKey)
+      .get();
+
+    if (chat.exists) {
+      if (!prevState.userTyping && this.state.userTyping) {
+        this.updateTypingStatus(userIndex, true, docKey);
+        console.log("user now typing");
+      }
+      if (prevState.userTyping && !this.state.userTyping) {
+        this.updateTypingStatus(userIndex, false, docKey);
+        console.log("user stopped typing");
+      }
+    }
+  };
+
+  updateTypingStatus = (idx, status, docKey) => {
+    console.log(
+      `called with idx ${idx}, status ${status} and docKey ${docKey}`
+    );
+    if (idx === 0) {
+      console.log(`updating user 1 to typing: ${status}`);
+      firebase
+        .firestore()
+        .collection("chats")
+        .doc(docKey)
+        .update({ user1Typing: status });
+    } else if (idx === 1) {
+      console.log(`updating user 2 to typing: ${status}`);
+      firebase
+        .firestore()
+        .collection("chats")
+        .doc(docKey)
+        .update({ user2Typing: status });
+    }
+  };
+
+  buildDocKey = () => [this.props.email, this.props.friend].sort().join(":");
+
   addEmoji = (emoji) => {
     const currText = document.getElementById("chat-text-box").value;
     const newText = currText + emoji;
@@ -140,8 +192,14 @@ class ChatTextBoxComponent extends React.Component {
 
   // if they clicked enter, submit the message
   userTyping = (e) => {
+    if (!this.state.userTyping) {
+      this.setState({ userTyping: true });
+    }
     e.keyCode === 13
-      ? this.setState({ chatText: e.target.value }, this.submitMessage)
+      ? this.setState(
+          { chatText: e.target.value, userTyping: false },
+          this.submitMessage
+        )
       : this.setState({ chatText: e.target.value });
   };
   handleClick = () => {
@@ -160,7 +218,10 @@ class ChatTextBoxComponent extends React.Component {
       document.getElementById("chat-text-box").value = "";
     }
   };
-  userClickedInput = () => this.props.messageReadFn();
+  userClickedInput = () => {
+    this.props.messageReadFn();
+    if (!this.state.userTyping) this.setState({ userTyping: true });
+  };
 }
 
 export default withStyles(styles)(ChatTextBoxComponent);

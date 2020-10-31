@@ -41,6 +41,7 @@ class DashboardComponent extends React.Component {
         {this.state.newChatFormVisible ? null : (
           <ChatViewComponent
             user={this.state.email}
+            friend={this.state.friend}
             chat={this.state.chats[this.state.selectedChat]}
             friendOnline={this.state.friendOnline}
             friendLastLoggedOut={this.state.friendLastLoggedOut}
@@ -53,7 +54,9 @@ class DashboardComponent extends React.Component {
             submitMessageFn={this.submitMessage}
             submitGifFn={this.submitGif}
             messageReadFn={this.messageRead}
-            users={[this.state.email, this.state.friend]}
+            email={this.state.email}
+            friend={this.state.friend}
+            // users={[this.state.email, this.state.friend]}
           ></ChatTextBoxComponent>
         ) : null}
         {this.state.newChatFormVisible ? (
@@ -236,6 +239,8 @@ class DashboardComponent extends React.Component {
         ],
         users: [this.state.email, chatObj.sendTo],
         receiverHasRead: false,
+        user1Typing: false,
+        user2Typing: false,
       });
     this.setState({ newChatFormVisible: false });
     this.selectChat(this.state.chats.length - 1);

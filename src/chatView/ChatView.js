@@ -12,6 +12,8 @@ class ChatViewComponent extends React.Component {
 
     this.state = {
       friendOnline: false,
+      // userTyping: false,
+      friendTyping: false,
     };
   }
 
@@ -25,10 +27,14 @@ class ChatViewComponent extends React.Component {
         container.scrollTo(0, container.scrollHeight);
       }, 100);
     }
+
+    console.log("friend typing STATE = ", this.state.friendTyping);
   }
 
   render() {
-    const { classes, chat, user } = this.props;
+    const { classes, chat, user, friend } = this.props;
+
+    // this.listenForTyping(user, friend);
 
     if (chat === undefined) {
       return <main id="chatview-container" className={classes.content}></main>;
@@ -85,19 +91,71 @@ class ChatViewComponent extends React.Component {
                   ) : (
                     <img src={_msg.gifRef} alt="" className={classes.gif} />
                   )}
-                  {}
                 </div>
               );
             })}
+            {/* <div className={classes.content}>NEW MESSAGE</div> */}
             {/* {this.receiverHasRead() ? (
               <div className={classes.readReceipt}>read icon</div>
             ) : null} */}
+            {this.state.friendTyping && (
+              <div className={classes.friendSent}>{"Friend is typing..."}</div>
+            )}
           </main>
           )
         </div>
       );
     }
   }
+
+  // componentDidUpdate = () => {
+  //   // console.log("State = ", this.state);
+  // };
+
+  componentDidMount = () => {
+    // is there a better way to wait for props to load than setTimeout?
+    // can i do this with promises?
+    setTimeout(
+      () => this.listenForTyping(this.props.user, this.props.friend),
+      2000
+    );
+  };
+
+  listenForTyping = async (user, friend) => {
+    const docKey = [user, friend].sort().join(":");
+    const docArr = docKey.split(":");
+    const userIndex = docArr.findIndex((elem) => elem === user);
+    const friendIndex = docArr.findIndex((elem) => elem === friend);
+    console.log(
+      `LISTENING FOR TYPING with user = ${user} and friend = ${friend}`
+    );
+    // console.log(`DOCKEY = ${docKey}`);
+    await firebase
+      .firestore()
+      .collection("chats")
+      .doc(docKey)
+      .onSnapshot((doc) => {
+        const data = doc.data();
+
+        if (data) {
+          if (friendIndex === 0) {
+            this.setState({ friendTyping: doc.data().user1Typing });
+          } else if (friendIndex === 1) {
+            this.setState({ friendTyping: doc.data().user2Typing });
+          }
+          // console.log("CHAT DATA = ", data.user2Typing);
+        }
+
+        // this.setState({ friendTyping: doc.data().user2Typing });
+
+        // this.setState();
+        // console.log("user1Typing: ", doc.data().user1Typing);
+        // console.log("user2Typing: ", doc.data().user2Typing);
+      });
+    // if (chat) {
+    //   chat.onSnapshot(() => console.log("chat changing"));
+    // }
+  };
 
   checkUrl = (text) => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -148,21 +206,19 @@ class ChatViewComponent extends React.Component {
         case difference < hourMs:
           const differenceMins = Math.ceil(difference / 1000 / 60);
           plural = differenceMins >= 2;
-          return ` | Active ${differenceMins} ${plural ? "mins" : "min"} ago`;
+          return ` | ${differenceMins} ${plural ? "mins" : "min"} ago`;
         case difference < dayMs:
           const differenceHours = Math.round(difference / 1000 / 60 / 60);
           plural = differenceHours >= 2;
-          return ` | Active ${differenceHours} ${
-            plural ? "hours" : "hour"
-          } ago`;
+          return ` | ${differenceHours} ${plural ? "hours" : "hour"} ago`;
         case difference < weekMs:
           dateString = new Date(timestamp).toString();
-          return ` | Active ${dateString.split(" ")[0]}`;
+          return ` | ${dateString.split(" ")[0]}`;
         case difference < yearMs:
           dateString = new Date(timestamp).toString();
           dateArray = dateString.split(" ");
           dateFormatted = [dateArray[0], dateArray[1], dateArray[2]].join(" ");
-          return ` | Active ${dateFormatted}`;
+          return ` | ${dateFormatted}`;
         case difference >= yearMs:
           dateString = new Date(timestamp).toString();
           dateArray = dateString.split(" ");
@@ -172,7 +228,7 @@ class ChatViewComponent extends React.Component {
             dateArray[2],
             dateArray[3],
           ].join(" ");
-          return ` | Active ${dateFormatted}`;
+          return ` | ${dateFormatted}`;
         default:
           //
           return "";

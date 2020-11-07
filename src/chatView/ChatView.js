@@ -14,6 +14,7 @@ class ChatViewComponent extends React.Component {
       friendOnline: false,
       // userTyping: false,
       friendTyping: false,
+      usersTyping: [],
     };
   }
 
@@ -28,11 +29,13 @@ class ChatViewComponent extends React.Component {
       }, 100);
     }
 
-    console.log("friend typing STATE = ", this.state.friendTyping);
+    //console.log("friend typing STATE = ", this.state.friendTyping);
   }
 
   render() {
     const { classes, chat, user, friend } = this.props;
+
+    let latestSentMessageFromUser;
 
     // this.listenForTyping(user, friend);
 
@@ -71,36 +74,75 @@ class ChatViewComponent extends React.Component {
           <main id="chatview-container" className={classes.content}>
             {chat.messages.map((_msg, _index) => {
               return (
-                // display friend's messages on left and user's messages on right
-                // we use dynamic class assignment to achieve this
-                <div
-                  key={_index}
-                  className={
-                    _msg.sender === user ? classes.userSent : classes.friendSent
+                <>
+                  <div
+                    key={_index}
+                    className={
+                      _msg.sender === user
+                        ? classes.userSent
+                        : classes.friendSent
+                    }
+                  >
+                    <strong>
+                      {this.convertChatViewTimestamp(_msg.timestamp)}
+                    </strong>
+                    {/* <br /> */}
+                    {/* // if _msg is the latest message from the user
+                // and if receiver has read -> _chat.receiverHasRead
+                // display icon with className={classes.readReceipt} */}
+                    <div className={classes.message}>
+                      {/* {this.convertChatViewTimestamp(_msg.timestamp) + ": "} */}
+                      {_msg.gifRef === null ? (
+                        this.checkUrl(_msg.message) ? (
+                          <a href={_msg.message} target="_blank">
+                            {_msg.message}
+                          </a>
+                        ) : (
+                          _msg.message
+                        )
+                      ) : (
+                        <img src={_msg.gifRef} alt="" className={classes.gif} />
+                      )}
+                    </div>
+                  </div>
+                  {
+                    //calculate the index and pass it here to make sure the read icon goes in the right place
                   }
-                >
-                  {this.convertChatViewTimestamp(_msg.timestamp) + ": "}
-                  {_msg.gifRef === null ? (
-                    this.checkUrl(_msg.message) ? (
-                      <a href={_msg.message} target="_blank">
-                        {_msg.message}
-                      </a>
-                    ) : (
-                      _msg.message
-                    )
-                  ) : (
-                    <img src={_msg.gifRef} alt="" className={classes.gif} />
+                  {_index ===
+                    this.findMostRecentMessageIndex(chat.messages, user) && (
+                    <svg
+                      height="100px"
+                      width="100px"
+                      fill="#000000"
+                      xmlns="http://www.w3.org/2000/svg"
+                      className={classes.readReceipt}
+                      // xmlns:xlink="http://www.w3.org/1999/xlink"
+                      version="1.0"
+                      x="0px"
+                      y="0px"
+                      viewBox="0 0 24 24"
+                      enable-background="new 0 0 24 24"
+                      // xml:space="preserve"
+                    >
+                      <path d="M22.8,11.4C22.6,11.1,18,5,12,5S1.4,11.1,1.2,11.4c-0.3,0.4-0.3,0.8,0,1.2C1.4,12.9,6,19,12,19s10.6-6.1,10.8-6.4  C23.1,12.2,23.1,11.8,22.8,11.4z M12,17c-2.8,0-5-2.2-5-5c0-2.8,2.2-5,5-5s5,2.2,5,5C17,14.8,14.8,17,12,17z"></path>
+                      <circle cx="12" cy="12" r="2.5"></circle>
+                    </svg>
                   )}
-                </div>
+                </>
               );
             })}
             {/* <div className={classes.content}>NEW MESSAGE</div> */}
             {/* {this.receiverHasRead() ? (
               <div className={classes.readReceipt}>read icon</div>
             ) : null} */}
-            {this.state.friendTyping && (
+            {/* {this.state.friendTyping && (
+              <div className={classes.friendSent}>{"Friend is typing..."}</div>
+            )} */}
+            {this.checkFriendTyping(friend, this.state.usersTyping) && (
+              // console.log(`selected friend ${friend} is typing!!!!`)
               <div className={classes.friendSent}>{"Friend is typing..."}</div>
             )}
+            {/* {<div className={classes.readReceipt}>Message received</div>} */}
           </main>
           )
         </div>
@@ -119,16 +161,83 @@ class ChatViewComponent extends React.Component {
       () => this.listenForTyping(this.props.user, this.props.friend),
       2000
     );
+
+    setTimeout(this.listenForTyping2, 2000);
+  };
+
+  findMostRecentMessageIndex = (messages, user) => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].receiverRead && messages[i].sender === user) {
+        return i;
+      }
+    }
+  };
+
+  listenForTyping2 = () => {
+    firebase
+      .firestore()
+      .collection("chats")
+      .where("users", "array-contains", this.props.user)
+      .onSnapshot((res) => {
+        // console.log("res", res.data());
+        const chats = res.docs.map((_doc) => _doc.data());
+        console.log(chats);
+        console.log("modified chats = ", chats);
+        console.log("chats.users = ", chats[0].users);
+
+        const usersTyping = [];
+
+        chats.forEach((chat) => {
+          const userTypingObj = {};
+          userTypingObj[chat.users[0]] = chat.user1Typing;
+          userTypingObj[chat.users[1]] = chat.user2Typing;
+          console.log("USER TYPING OBJ = ", userTypingObj);
+          usersTyping.push(userTypingObj);
+          // const user1TypingObj = {};
+          // const user2TypingObj = {};
+          // user1TypingObj[chat.users[0]] = chat.user1Typing;
+          // console.log("user1TypingObj =", user1TypingObj);
+          // user2TypingObj[chat.users[1]] = chat.user2Typing;
+          // const typing = [user1TypingObj, user2TypingObj];
+          // usersTyping.push(typing);
+        });
+
+        console.log("usersTyping = ", usersTyping);
+
+        this.setState({ usersTyping });
+
+        // const user1TypingObj = {};
+        // const user2TypingObj = {};
+        // user1TypingObj[chats.users[0]] = chats.user1Typing;
+        // user2TypingObj[chats.users[1]] = chats.user2Typing;
+        // const usersTyping = [user1TypingObj, user2TypingObj];
+        // console.log("usersTyping = ", usersTyping);
+      });
+  };
+
+  checkFriendTyping = (friend, usersTyping) => {
+    console.log("usersTYPING =", usersTyping);
+    console.log(`checking if friend ${friend} is typing...`);
+    for (let obj of usersTyping) {
+      // console.log(`typeof friend is ${typeof Object.keys(obj)[0]}`); // string
+      console.log("obj =", obj);
+      if (obj[friend]) {
+        console.log("obj[friend] = ", obj[friend]);
+        console.log(`CONFIRMED THAT FRIEND ${friend} IS TYPING`);
+        return true;
+      }
+    }
+    return false;
   };
 
   listenForTyping = async (user, friend) => {
+    console.log(`listening for typing from friend ${friend}`);
     const docKey = [user, friend].sort().join(":");
     const docArr = docKey.split(":");
-    const userIndex = docArr.findIndex((elem) => elem === user);
     const friendIndex = docArr.findIndex((elem) => elem === friend);
-    console.log(
-      `LISTENING FOR TYPING with user = ${user} and friend = ${friend}`
-    );
+    // console.log(
+    //   `LISTENING FOR TYPING with user = ${user} and friend = ${friend}`
+    // );
     // console.log(`DOCKEY = ${docKey}`);
     await firebase
       .firestore()
@@ -139,10 +248,15 @@ class ChatViewComponent extends React.Component {
 
         if (data) {
           if (friendIndex === 0) {
-            this.setState({ friendTyping: doc.data().user1Typing });
+            this.setState({ friendTyping: data.user1Typing });
           } else if (friendIndex === 1) {
-            this.setState({ friendTyping: doc.data().user2Typing });
+            this.setState({ friendTyping: data.user2Typing });
           }
+
+          // if (data.)
+          // if (data.receiverHasRead) console.log(`${friend} has read`);
+          // else console.log(`${friend} has NOT read`);
+          // if (data)
           // console.log("CHAT DATA = ", data.user2Typing);
         }
 

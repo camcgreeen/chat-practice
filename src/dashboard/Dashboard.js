@@ -56,6 +56,11 @@ class DashboardComponent extends React.Component {
             messageReadFn={this.messageRead}
             email={this.state.email}
             friend={this.state.friend}
+            selectChatFn={this.selectChat}
+            selectedChatIndex={this.state.selectedChat}
+            // onClick={() => this.messageRead(this.state.friend)}
+            // onClick={() => this.selectChat(this.state.selectedChat)}
+            // onClick={console.log(`focused chat with ${this.state.friend}`)}
             // users={[this.state.email, this.state.friend]}
           ></ChatTextBoxComponent>
         ) : null}
@@ -74,14 +79,14 @@ class DashboardComponent extends React.Component {
   }
 
   signOut = () => {
-    console.log("SIGNING OUT");
+    // console.log("SIGNING OUT");
     this.setState({ lastLoggedOut: Date.now() }, async () => {
       await firebase
         .firestore()
         .collection("users")
         .doc(this.state.email)
         .update({ lastLoggedOut: this.state.lastLoggedOut });
-      console.log("logged out at: ", this.state.lastLoggedOut);
+      // console.log("logged out at: ", this.state.lastLoggedOut);
       firebase.auth().signOut();
     });
   };
@@ -95,17 +100,20 @@ class DashboardComponent extends React.Component {
       .collection("chats")
       .doc(docKey)
       .get();
-    console.log(chat.exists);
+    // console.log(chat.exists);
     return chat.exists;
   };
 
   selectChat = async (chatIndex) => {
     await this.setState({ selectedChat: chatIndex, newChatFormVisible: false });
-    this.messageRead();
+    const friend = this.state.chats[this.state.selectedChat].users.filter(
+      (_usr) => _usr !== this.state.email
+    )[0];
+    this.messageRead(friend);
     if (this.state.chats.length > 0) {
-      const friend = this.state.chats[this.state.selectedChat].users.filter(
-        (_usr) => _usr !== this.state.email
-      )[0];
+      // const friend = this.state.chats[this.state.selectedChat].users.filter(
+      //   (_usr) => _usr !== this.state.email
+      // )[0];
       this.setState({ friend }, () => {
         console.log(
           `Selected chat ${this.state.selectedChat} with friend ${this.state.friend}`
@@ -115,7 +123,7 @@ class DashboardComponent extends React.Component {
           .collection("users")
           .doc(this.state.friend)
           .onSnapshot((doc) => {
-            console.log("doc.data() = ", doc.data());
+            // console.log("doc.data() = ", doc.data());
             this.setState(
               {
                 friendOnline: doc.data().online,
@@ -124,16 +132,16 @@ class DashboardComponent extends React.Component {
               () => {
                 // console.log("prevState", this.state.prevChats);
                 // console.log("state", this.state);
-                console.log(
-                  `${this.state.friend} last logged out ${new Date(
-                    this.state.friendLastLoggedOut
-                  ).toString()}`
-                );
-                console.log(
-                  `${this.state.friend} last logged out ${
-                    doc.data().lastLoggedOut
-                  }`
-                );
+                // console.log(
+                //   `${this.state.friend} last logged out ${new Date(
+                //     this.state.friendLastLoggedOut
+                //   ).toString()}`
+                // );
+                // console.log(
+                //   `${this.state.friend} last logged out ${
+                //     doc.data().lastLoggedOut
+                //   }`
+                // );
               }
             );
           });
@@ -142,7 +150,7 @@ class DashboardComponent extends React.Component {
   };
 
   submitMessage = (msg) => {
-    console.log("SENDIGN MESSAGEAR");
+    // console.log("SENDIGN MESSAGEAR");
     const docKey = this.buildDocKey(
       this.state.chats[this.state.selectedChat].users.filter(
         (_usr) => _usr !== this.state.email
@@ -159,6 +167,7 @@ class DashboardComponent extends React.Component {
           message: msg,
           timestamp: Date.now(),
           gifRef: null,
+          receiverRead: false,
         }),
         receiverHasRead: false,
       });
@@ -182,6 +191,7 @@ class DashboardComponent extends React.Component {
           message: null,
           timestamp: Date.now(),
           gifRef: url,
+          receiverRead: false,
         }),
         receiverHasRead: false,
       });
@@ -194,21 +204,111 @@ class DashboardComponent extends React.Component {
     this.setState({ newChatFormVisible: true, selectedChat: null });
   };
 
-  messageRead = () => {
+  messageRead = (friend) => {
+    // if (friend) {
+    //   console.log("reading emssage");
+    console.log("reading message from", friend);
     const docKey = this.buildDocKey(
       this.state.chats[this.state.selectedChat].users.filter(
         (_usr) => _usr !== this.state.email
       )[0]
     );
     if (this.clickedChatWhereNotSender(this.state.selectedChat)) {
+      // let obj = JSON.parse(
+      //   JSON.stringify(this.state.chats[this.state.selectedChat])
+      // );
+      // console.log(obj);
+      // let arr = [...obj.messages];
+      // if (Array.isArray(this.state.chats[this.state.selectedChat].messages)) {
+      //   console.log("aaaawhaaaataa");
+      //   // let obj = JSON.parse(
+      //   //   JSON.stringify(this.state.chats[this.state.selectedChat])
+      //   // );
+      //   // console.log(obj);
+      //   // let arr = [...obj.messages];
+      //   arr.forEach((message) => {
+      //     if (message.sender === friend) {
+      //       message.receiverRead = true;
+      //     }
+      //   });
+      //   console.log(arr);
+      // }
+
       firebase
         .firestore()
         .collection("chats")
         .doc(docKey)
         .update({ receiverHasRead: true });
+      // .update({ receiverHasRead: true, messages: arr });
+
+      // console.log("CHATA = ", this.state.chats[this.state.selectedChat]);
     } else {
       console.log("Clicked message where the user was the sender");
     }
+
+    firebase
+      .firestore()
+      .collection("chats")
+      .doc(docKey)
+      .get()
+      .then((doc) => {
+        const chatCopy = doc.data();
+        let messages = chatCopy.messages;
+        messages.forEach((msg) => {
+          if (msg.sender === friend) {
+            msg.receiverRead = true;
+          }
+        });
+        firebase
+          .firestore()
+          .collection("chats")
+          .doc(docKey)
+          .update({ messages });
+        console.log("doc =", chatCopy);
+      });
+    // const chatCopyMessages = chatCopy.data().messages;
+    // console.log("chatCopy", chatCopy);
+    // chatCopyMessages.forEach((msg) => (msg.receiverRead = true));
+    // console.log("chatCopy", chatCopyMessages);
+
+    // firebase
+    //   .firestore()
+    //   .collection("chats")
+    //   .doc(docKey)
+    //   .update(messages.forEach((msg) => (msg.receiverRead = true)));
+
+    const obj = JSON.parse(
+      JSON.stringify(this.state.chats[this.state.selectedChat])
+    );
+    let messages = [...obj.messages];
+
+    console.log("CHAT = ", this.state.chats[this.state.selectedChat]);
+    // const chatDeepCopy = { ...this.state.chats[this.state.selectedChat] };
+    // const chatDeepCopy = JSON.parse(
+    //   JSON.stringify(this.state.chats[this.state.selectedChat])
+    // );
+    // this.setState({chats[this.state.selectedChat]: })
+    // chatDeepCopy.messages.forEach((message) => {
+    //   if (message.sender === friend) {
+    //     message.receiverRead = true;
+    //   }
+    // });
+    // const arr = this.state.chats[this.state.selectedChat];
+    // if (Array.isArray(this.state.chats[this.state.selectedChat].messages)) {
+    //   console.log("aaaawhaaaataa");
+    //   let obj = JSON.parse(
+    //     JSON.stringify(this.state.chats[this.state.selectedChat])
+    //   );
+    //   console.log(obj);
+    //   let arr = [...obj.messages];
+    //   arr.forEach((message) => {
+    //     if (message.sender === friend) {
+    //       message.receiverRead = true;
+    //     }
+    //   });
+    //   console.log(arr);
+    // }
+    // }
   };
 
   goToChat = async (docKey, msg) => {
@@ -235,6 +335,7 @@ class DashboardComponent extends React.Component {
             sender: this.state.email,
             gifRef: chatObj.gifRef,
             timestamp: Date.now(),
+            receiverRead: false,
           },
         ],
         users: [this.state.email, chatObj.sendTo],
@@ -253,7 +354,7 @@ class DashboardComponent extends React.Component {
     ].sender !== this.state.email;
 
   updateOnlineStatus = () => {
-    console.log(this.state.email + " online: " + this.state.online);
+    // console.log(this.state.email + " online: " + this.state.online);
     firebase
       .firestore()
       .collection("users")
@@ -262,7 +363,7 @@ class DashboardComponent extends React.Component {
   };
 
   componentDidMount = () => {
-    console.log("ejcena");
+    // console.log("ejcena");
     document.title = "Jabber";
     // logging in, logging out, users being deleted, etc
     firebase.auth().onAuthStateChanged(async (_usr) => {
@@ -289,6 +390,11 @@ class DashboardComponent extends React.Component {
               () => {
                 if (this.state.chats)
                   this.setState({ online: true }, this.updateOnlineStatus);
+                // this is to mark chats as read when they're already selected and a message is received
+                // also means that we don't need to manually select chat when message is sent or
+                // when input box is focused
+                if (this.state.selectedChat !== null)
+                  this.selectChat(this.state.selectedChat);
                 // select most recent chat by default
                 // i guess it's not totally ideal as good UX would be to select
                 // most recent READ message

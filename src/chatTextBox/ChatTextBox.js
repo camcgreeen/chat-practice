@@ -49,6 +49,7 @@ class ChatTextBoxComponent extends React.Component {
           className={classes.chatTextBox}
           autoComplete="off"
           onFocus={this.userClickedInput}
+          // onClick={() => this.selectChat(this.props.selectedChatIndex)}
           onBlur={() => this.setState({ userTyping: false })}
           // onSubmit={() => this.setState({ userTyping: false })}
           // onFocusOut={() => this.setState({ userTyping: false })}
@@ -117,9 +118,9 @@ class ChatTextBoxComponent extends React.Component {
     const docKey = this.buildDocKey();
     const docArr = docKey.split(":");
     // const user = docKey.split(":")[0];
-    console.log(`this.state.email = ${this.props.email}`);
+    // console.log(`this.state.email = ${this.props.email}`);
     const userIndex = docArr.findIndex((elem) => elem === this.props.email);
-    console.log(`userIndex = ${userIndex}`);
+    // console.log(`userIndex = ${userIndex}`);
     const chat = await firebase
       .firestore()
       .collection("chats")
@@ -129,28 +130,32 @@ class ChatTextBoxComponent extends React.Component {
     if (chat.exists) {
       if (!prevState.userTyping && this.state.userTyping) {
         this.updateTypingStatus(userIndex, true, docKey);
-        console.log("user now typing");
+        // console.log("user now typing");
       }
       if (prevState.userTyping && !this.state.userTyping) {
         this.updateTypingStatus(userIndex, false, docKey);
-        console.log("user stopped typing");
+        // console.log("user stopped typing");
       }
     }
   };
 
+  selectChat = (index) => {
+    this.props.selectChatFn(index);
+  };
+
   updateTypingStatus = (idx, status, docKey) => {
-    console.log(
-      `called with idx ${idx}, status ${status} and docKey ${docKey}`
-    );
+    // console.log(
+    //   `called with idx ${idx}, status ${status} and docKey ${docKey}`
+    // );
     if (idx === 0) {
-      console.log(`updating user 1 to typing: ${status}`);
+      // console.log(`updating user 1 to typing: ${status}`);
       firebase
         .firestore()
         .collection("chats")
         .doc(docKey)
         .update({ user1Typing: status });
     } else if (idx === 1) {
-      console.log(`updating user 2 to typing: ${status}`);
+      // console.log(`updating user 2 to typing: ${status}`);
       firebase
         .firestore()
         .collection("chats")
@@ -213,6 +218,7 @@ class ChatTextBoxComponent extends React.Component {
   // make sure input isn't an empty string or a string that only contains spaces
   messageValid = (txt) => txt && txt.replace(/\s/g, "").length;
   submitMessage = () => {
+    // this.selectChat(this.props.selectedChatIndex);
     if (this.messageValid(this.state.chatText)) {
       this.props.submitMessageFn(this.state.chatText);
       document.getElementById("chat-text-box").value = "";

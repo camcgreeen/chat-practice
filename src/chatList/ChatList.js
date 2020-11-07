@@ -79,7 +79,18 @@ class ChatListComponent extends React.Component {
                       }
                       secondary={
                         <React.Fragment>
-                          <Typography component="span" color="textPrimary">
+                          <Typography
+                            component="span"
+                            color="textPrimary"
+                            style={
+                              this.calculateNumberUnread(
+                                _chat,
+                                this.props.userEmail
+                              ) > 0
+                                ? { fontWeight: "bold" }
+                                : {}
+                            }
+                          >
                             {`${this.convertChatListTimestamp(
                               _chat.messages[_chat.messages.length - 1]
                                 .timestamp
@@ -120,16 +131,23 @@ class ChatListComponent extends React.Component {
                                   : null
                               } */}
                           </Typography>
+                          {/* <p>Hey</p> */}
+                          <p>
+                            {`${this.calculateNumberUnread(
+                              _chat,
+                              this.props.userEmail
+                            )} unread`}
+                          </p>
                         </React.Fragment>
                       }
                     ></ListItemText>
-                    {!_chat.receiverHasRead && !this.userIsSender(_chat) ? (
+                    {/* {!_chat.receiverHasRead && !this.userIsSender(_chat) ? (
                       <ListItemIcon>
                         <NotificationImportant
                           className={classes.unreadMessage}
                         ></NotificationImportant>
                       </ListItemIcon>
-                    ) : null}
+                    ) : null} */}
                   </ListItem>
                   <Divider></Divider>
                 </div>
@@ -154,6 +172,20 @@ class ChatListComponent extends React.Component {
       );
     }
   }
+
+  calculateNumberUnread = (chat, user) => {
+    let count = 0;
+
+    // console.log("messages = ", chat.messages);
+
+    for (let i = 0; i < chat.messages.length; i++) {
+      // console.log("aaa", chat.messages[i].receiverRead);
+      if (!chat.messages[i].receiverRead && chat.messages[i].sender !== user)
+        count++;
+    }
+    // console.log(`${user} has ${count} unread messages`);
+    return count;
+  };
 
   newChat = () => {
     this.props.newChatBtnFn();

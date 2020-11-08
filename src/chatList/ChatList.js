@@ -12,7 +12,17 @@ import Button from "@material-ui/core/Button";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
 import NotificationImportant from "@material-ui/icons/NotificationImportant";
 
+const firebase = require("firebase");
+
 class ChatListComponent extends React.Component {
+  constructor() {
+    super();
+
+    this.state = {
+      friendNames: [],
+    };
+  }
+
   render() {
     const { classes } = this.props;
 
@@ -40,6 +50,11 @@ class ChatListComponent extends React.Component {
           </Button>
           <List>
             {orderedChats.map((_chat, _index) => {
+              // this.getFriendNameChatList(
+              //   _chat.users.filter((_user) => _user !== this.props.userEmail)[0]
+              // );
+              // console.log(_index);
+              // console.log(this.state.friendNames);
               return (
                 <div key={_index}>
                   <ListItem
@@ -69,13 +84,25 @@ class ChatListComponent extends React.Component {
                             )[0]
                             .split("")[0]
                         }
+                        {/* {this.props.friendFirstName +
+                          " " +
+                          this.props.friendLastName} */}
                       </Avatar>
                     </ListItemAvatar>
                     <ListItemText
                       primary={
-                        _chat.users.filter(
-                          (_user) => _user !== this.props.userEmail
-                        )[0]
+                        <Typography
+                          style={
+                            this.calculateNumberUnread(
+                              _chat,
+                              this.props.userEmail
+                            ) > 0
+                              ? { fontWeight: "bold" }
+                              : {}
+                          }
+                        >
+                          {this.state.friendNames[_index]}
+                        </Typography>
                       }
                       secondary={
                         <React.Fragment>
@@ -172,6 +199,104 @@ class ChatListComponent extends React.Component {
       );
     }
   }
+
+  // getFriendNameChatList = (friend) => {
+  //   console.log(`getting friend info of ${friend}`);
+  //   // setTimeout(() => this.props.getFriendNameChatListFn(friend), 2000);
+  //   this.props.getFriendNameChatListFn(friend);
+  // };
+
+  // getFriendNameChatList = (friend) => {
+  //   let name;
+  //   firebase
+  //     .firestore()
+  //     .collection("users")
+  //     .doc(friend)
+  //     .get()
+  //     .then((doc) => {
+  //       const data = doc.data();
+  //       console.log(data.firstName + " " + data.lastName);
+  //       name = data.firstName + " " + data.lastName;
+  //       this.state.friendNames.push(name);
+  //     });
+  //   // return name;
+  //   // .then((doc) => {
+  //   // console.log("getting user data...");
+  //   // const data = doc.data();
+  //   // console.log(`data for user ${friend} =`, data);
+  //   // this.setState({
+  //   //   friendFirstName: data.firstName,
+  //   //   friendLastName: data.lastName,
+  //   // });
+  //   // )}
+  //   // return [data.firstName, data.lastName];
+  // };
+
+  componentDidMount() {
+    // is there a better way of waiting until chat props has
+    // loaded rather than using setTimeout?
+    setTimeout(this.getFriendNames, 500);
+  }
+
+  getFriendNames = async () => {
+    firebase
+      .firestore()
+      .collection("chats")
+      .where("users", "array-contains", this.props.userEmail)
+      .onSnapshot(async (res) => {
+        const chats = res.docs.map((_doc) => _doc.data());
+
+        const friendEmails = [];
+        const friendNames = [];
+
+        const chatsToOrder = [...chats];
+        const orderedChats = chatsToOrder.sort(
+          (a, b) =>
+            b.messages[b.messages.length - 1].timestamp -
+            a.messages[a.messages.length - 1].timestamp
+        );
+
+        for (let chat of orderedChats) {
+          for (let user of chat.users) {
+            console.log(user);
+            if (user !== this.props.userEmail) {
+              friendEmails.push(user);
+            }
+            // if (this.)
+          }
+          // console.log("chat2 = ", chat);
+        }
+        // console.log("friendNames =", friendEmails);
+
+        for (let email of friendEmails) {
+          await firebase
+            .firestore()
+            .collection("users")
+            .doc(email)
+            .get()
+            .then((doc) => {
+              const data = doc.data();
+              // console.log(`name = ${data.firstName} ${data.lastName}`);
+              const name = data.firstName + " " + data.lastName;
+              console.log(`name = ${name}`);
+              friendNames.push(name);
+            });
+        }
+
+        console.log("friendNames = ", friendNames);
+
+        this.setState({ friendNames });
+
+        // convert indices
+
+        // chats.findIndex((element) => element === orderedChats[_index]);
+
+        // this.setState({friendNames});
+      });
+
+    //re-run this every time chats changes
+    //calculate based on orderChats instead of chats so the views match up
+  };
 
   calculateNumberUnread = (chat, user) => {
     let count = 0;

@@ -15,6 +15,8 @@ class ChatViewComponent extends React.Component {
       // userTyping: false,
       friendTyping: false,
       usersTyping: [],
+      friendFirstName: null,
+      friendLastName: null,
     };
   }
 
@@ -28,6 +30,8 @@ class ChatViewComponent extends React.Component {
         container.scrollTo(0, container.scrollHeight);
       }, 100);
     }
+
+    // this.getUserInfo(this.props.friend);
 
     //console.log("friend typing STATE = ", this.state.friendTyping);
   }
@@ -63,7 +67,11 @@ class ChatViewComponent extends React.Component {
               // </div>
             }
             {/* Your conversation with{" "} */}
-            {chat.users.filter((_usr) => _usr !== user)[0]}
+            {/* {chat.users.filter((_usr) => _usr !== user)[0]} */}
+            {/* {this.getUserInfo(this.props.friend)} */}
+            {/* {this.state.friendFirstName + " " + this.state.friendLastName} */}
+            {this.props.friendFirstName + " " + this.props.friendLastName}
+            {}
             {/* {/* {this.props.friendOnline ? " | online" : this.props.lastLoggedOut} */}
             {this.props.friendOnline
               ? " | (online_symbol) | Active on Jabber"
@@ -155,14 +163,15 @@ class ChatViewComponent extends React.Component {
   // };
 
   componentDidMount = () => {
+    // setTimeout(
+    //   () => this.listenForTyping(this.props.user, this.props.friend),
+    //   2000
+    // );
+
     // is there a better way to wait for props to load than setTimeout?
     // can i do this with promises?
-    setTimeout(
-      () => this.listenForTyping(this.props.user, this.props.friend),
-      2000
-    );
-
-    setTimeout(this.listenForTyping2, 2000);
+    setTimeout(this.listenForTyping, 2000);
+    setTimeout(this.getUserInfo, 2000);
   };
 
   findMostRecentMessageIndex = (messages, user) => {
@@ -173,7 +182,36 @@ class ChatViewComponent extends React.Component {
     }
   };
 
-  listenForTyping2 = () => {
+  updateUserInfo = () => {
+    this.props.updateUserInfoFn();
+    // if (friend) {
+    // firebase
+    //   .firestore()
+    //   .collection("users")
+    //   .doc(friend)
+    //   .get()
+    //   .then((doc) => {
+    //     console.log("getting user data...");
+    //     const data = doc.data();
+    //     console.log(`data for user ${friend} =`, data);
+    //     this.setState({
+    //       friendFirstName: data.firstName,
+    //       friendLastName: data.lastName,
+    //     });
+    //     // return [data.firstName, data.lastName];
+    //     // this.setState({ firstName: data.firstName, lastName: data.lastName });
+    //   });
+    // }
+    firebase
+      .firestore()
+      .collection("users")
+      .onSnapshot((res) => {
+        const users = res.docs.map((_doc) => _doc.data());
+        console.log("users =", users);
+      });
+  };
+
+  listenForTyping = () => {
     firebase
       .firestore()
       .collection("chats")
@@ -181,9 +219,9 @@ class ChatViewComponent extends React.Component {
       .onSnapshot((res) => {
         // console.log("res", res.data());
         const chats = res.docs.map((_doc) => _doc.data());
-        console.log(chats);
-        console.log("modified chats = ", chats);
-        console.log("chats.users = ", chats[0].users);
+        // console.log(chats);
+        // console.log("modified chats = ", chats);
+        // console.log("chats.users = ", chats[0].users);
 
         const usersTyping = [];
 
@@ -191,7 +229,7 @@ class ChatViewComponent extends React.Component {
           const userTypingObj = {};
           userTypingObj[chat.users[0]] = chat.user1Typing;
           userTypingObj[chat.users[1]] = chat.user2Typing;
-          console.log("USER TYPING OBJ = ", userTypingObj);
+          // console.log("USER TYPING OBJ = ", userTypingObj);
           usersTyping.push(userTypingObj);
           // const user1TypingObj = {};
           // const user2TypingObj = {};
@@ -216,60 +254,60 @@ class ChatViewComponent extends React.Component {
   };
 
   checkFriendTyping = (friend, usersTyping) => {
-    console.log("usersTYPING =", usersTyping);
-    console.log(`checking if friend ${friend} is typing...`);
+    // console.log("usersTYPING =", usersTyping);
+    // console.log(`checking if friend ${friend} is typing...`);
     for (let obj of usersTyping) {
       // console.log(`typeof friend is ${typeof Object.keys(obj)[0]}`); // string
-      console.log("obj =", obj);
+      // console.log("obj =", obj);
       if (obj[friend]) {
-        console.log("obj[friend] = ", obj[friend]);
-        console.log(`CONFIRMED THAT FRIEND ${friend} IS TYPING`);
+        // console.log("obj[friend] = ", obj[friend]);
+        // console.log(`CONFIRMED THAT FRIEND ${friend} IS TYPING`);
         return true;
       }
     }
     return false;
   };
 
-  listenForTyping = async (user, friend) => {
-    console.log(`listening for typing from friend ${friend}`);
-    const docKey = [user, friend].sort().join(":");
-    const docArr = docKey.split(":");
-    const friendIndex = docArr.findIndex((elem) => elem === friend);
-    // console.log(
-    //   `LISTENING FOR TYPING with user = ${user} and friend = ${friend}`
-    // );
-    // console.log(`DOCKEY = ${docKey}`);
-    await firebase
-      .firestore()
-      .collection("chats")
-      .doc(docKey)
-      .onSnapshot((doc) => {
-        const data = doc.data();
+  // listenForTyping = async (user, friend) => {
+  //   console.log(`listening for typing from friend ${friend}`);
+  //   const docKey = [user, friend].sort().join(":");
+  //   const docArr = docKey.split(":");
+  //   const friendIndex = docArr.findIndex((elem) => elem === friend);
+  //   // console.log(
+  //   //   `LISTENING FOR TYPING with user = ${user} and friend = ${friend}`
+  //   // );
+  //   // console.log(`DOCKEY = ${docKey}`);
+  //   await firebase
+  //     .firestore()
+  //     .collection("chats")
+  //     .doc(docKey)
+  //     .onSnapshot((doc) => {
+  //       const data = doc.data();
 
-        if (data) {
-          if (friendIndex === 0) {
-            this.setState({ friendTyping: data.user1Typing });
-          } else if (friendIndex === 1) {
-            this.setState({ friendTyping: data.user2Typing });
-          }
+  //       if (data) {
+  //         if (friendIndex === 0) {
+  //           this.setState({ friendTyping: data.user1Typing });
+  //         } else if (friendIndex === 1) {
+  //           this.setState({ friendTyping: data.user2Typing });
+  //         }
 
-          // if (data.)
-          // if (data.receiverHasRead) console.log(`${friend} has read`);
-          // else console.log(`${friend} has NOT read`);
-          // if (data)
-          // console.log("CHAT DATA = ", data.user2Typing);
-        }
+  //         // if (data.)
+  //         // if (data.receiverHasRead) console.log(`${friend} has read`);
+  //         // else console.log(`${friend} has NOT read`);
+  //         // if (data)
+  //         // console.log("CHAT DATA = ", data.user2Typing);
+  //       }
 
-        // this.setState({ friendTyping: doc.data().user2Typing });
+  //       // this.setState({ friendTyping: doc.data().user2Typing });
 
-        // this.setState();
-        // console.log("user1Typing: ", doc.data().user1Typing);
-        // console.log("user2Typing: ", doc.data().user2Typing);
-      });
-    // if (chat) {
-    //   chat.onSnapshot(() => console.log("chat changing"));
-    // }
-  };
+  //       // this.setState();
+  //       // console.log("user1Typing: ", doc.data().user1Typing);
+  //       // console.log("user2Typing: ", doc.data().user2Typing);
+  //     });
+  //   // if (chat) {
+  //   //   chat.onSnapshot(() => console.log("chat changing"));
+  //   // }
+  // };
 
   checkUrl = (text) => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;

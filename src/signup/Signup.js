@@ -18,6 +18,8 @@ class SignupComponent extends React.Component {
       email: null,
       password: null,
       passwordConfirmation: null,
+      firstName: null,
+      lastName: null,
       signupError: "",
     };
   }
@@ -62,6 +64,24 @@ class SignupComponent extends React.Component {
                 type="password"
                 onChange={(e) => this.userTyping("passwordConfirmation", e)}
                 id="signup-password-confirmation-input"
+              ></Input>
+            </FormControl>
+            <FormControl required fullWidth margin="normal">
+              <InputLabel htmlFor="signup-first-name-input">
+                Enter your first name
+              </InputLabel>
+              <Input
+                onChange={(e) => this.userTyping("firstName", e)}
+                id="signup-first-name-input"
+              ></Input>
+            </FormControl>
+            <FormControl required fullWidth margin="normal">
+              <InputLabel htmlFor="signup-last-name-input">
+                Enter your last name
+              </InputLabel>
+              <Input
+                onChange={(e) => this.userTyping("lastName", e)}
+                id="signup-last-name-input"
               ></Input>
             </FormControl>
             <Button
@@ -113,6 +133,12 @@ class SignupComponent extends React.Component {
       case "passwordConfirmation":
         this.setState({ passwordConfirmation: e.target.value });
         break;
+      case "firstName":
+        this.setState({ firstName: e.target.value });
+        break;
+      case "lastName":
+        this.setState({ lastName: e.target.value });
+        break;
       default:
         break;
     }
@@ -143,6 +169,8 @@ class SignupComponent extends React.Component {
           //   .catch((err) => console.log(err));
           const userObj = {
             email: authRes.user.email,
+            firstName: this.state.firstName,
+            lastName: this.state.lastName,
             lastloggedOut: "",
             online: false,
           };

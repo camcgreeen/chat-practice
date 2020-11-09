@@ -109,37 +109,37 @@ class DashboardComponent extends React.Component {
     return chat.exists;
   };
 
-  getFriendName = (friend) => {
-    firebase
-      .firestore()
-      .collection("users")
-      .doc(friend)
-      .get()
-      .then((doc) => {
-        const data = doc.data();
-        this.setState({
-          friendFirstName: data.firstName,
-          friendLastName: data.lastName,
-        });
-      });
-    // .then((doc) => {
-    // console.log("getting user data...");
-    // const data = doc.data();
-    // console.log(`data for user ${friend} =`, data);
-    // this.setState({
-    //   friendFirstName: data.firstName,
-    //   friendLastName: data.lastName,
-    // });
-    // )}
-    // return [data.firstName, data.lastName];
-  };
+  // getFriendName = (friend) => {
+  //   firebase
+  //     .firestore()
+  //     .collection("users")
+  //     .doc(friend)
+  //     .get()
+  //     .then((doc) => {
+  //       const data = doc.data();
+  //       this.setState({
+  //         friendFirstName: data.firstName,
+  //         friendLastName: data.lastName,
+  //       });
+  //     });
+  // .then((doc) => {
+  // console.log("getting user data...");
+  // const data = doc.data();
+  // console.log(`data for user ${friend} =`, data);
+  // this.setState({
+  //   friendFirstName: data.firstName,
+  //   friendLastName: data.lastName,
+  // });
+  // )}
+  // return [data.firstName, data.lastName];
+  // };
 
   selectChat = async (chatIndex) => {
     await this.setState({ selectedChat: chatIndex, newChatFormVisible: false });
     const friend = this.state.chats[this.state.selectedChat].users.filter(
       (_usr) => _usr !== this.state.email
     )[0];
-    this.getFriendName(friend);
+    // this.getFriendName(friend);
     this.messageRead(friend);
     if (this.state.chats.length > 0) {
       // const friend = this.state.chats[this.state.selectedChat].users.filter(

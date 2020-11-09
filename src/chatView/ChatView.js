@@ -22,7 +22,6 @@ class ChatViewComponent extends React.Component {
 
   componentDidUpdate(prevProps) {
     const container = document.getElementById("chatview-container");
-
     // automatically scroll to the latest message in the conversation
     if (container) {
       // container.scrollTo(0, container.scrollHeight);
@@ -30,9 +29,7 @@ class ChatViewComponent extends React.Component {
         container.scrollTo(0, container.scrollHeight);
       }, 100);
     }
-
     // this.getUserInfo(this.props.friend);
-
     //console.log("friend typing STATE = ", this.state.friendTyping);
   }
 
@@ -178,6 +175,15 @@ class ChatViewComponent extends React.Component {
     // can i do this with promises?
     setTimeout(this.listenForTyping, 2000);
     setTimeout(this.getUserInfo, 2000);
+    // setTimeout(() => {
+    //   const container = document.getElementById("chatview-container");
+    //   console.log("container = ", container);
+
+    //   // automatically scroll to the latest message in the conversation
+    //   if (container) {
+    //     container.scrollTo(0, container.scrollHeight);
+    //   }
+    // }, 1000);
   };
 
   getFriendName = (chat, user) => {

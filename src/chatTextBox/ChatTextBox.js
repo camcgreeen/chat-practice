@@ -223,6 +223,15 @@ class ChatTextBoxComponent extends React.Component {
       this.props.submitMessageFn(this.state.chatText);
       document.getElementById("chat-text-box").value = "";
     }
+    // setTimeout(() => {
+    //   const container = document.getElementById("chatview-container");
+    //   console.log("container = ", container);
+
+    //   // automatically scroll to the latest message in the conversation
+    //   if (container) {
+    //     container.scrollTo(0, container.scrollHeight);
+    //   }
+    // }, 50);
   };
   userClickedInput = () => {
     this.props.messageReadFn();

@@ -101,7 +101,12 @@ class ChatListComponent extends React.Component {
                               : {}
                           }
                         >
-                          {this.state.friendNames[_index]}
+                          {/* {this.state.friendNames[_index]} */}
+                          {
+                            _chat.users.filter(
+                              (_user) => _user !== this.props.userEmail
+                            )[0]
+                          }
                         </Typography>
                       }
                       secondary={
@@ -238,65 +243,65 @@ class ChatListComponent extends React.Component {
     setTimeout(this.getFriendNames, 500);
   }
 
-  getFriendNames = async () => {
-    firebase
-      .firestore()
-      .collection("chats")
-      .where("users", "array-contains", this.props.userEmail)
-      .onSnapshot(async (res) => {
-        const chats = res.docs.map((_doc) => _doc.data());
+  // getFriendNames = async () => {
+  //   firebase
+  //     .firestore()
+  //     .collection("chats")
+  //     .where("users", "array-contains", this.props.userEmail)
+  //     .onSnapshot(async (res) => {
+  //       const chats = res.docs.map((_doc) => _doc.data());
 
-        const friendEmails = [];
-        const friendNames = [];
+  //       const friendEmails = [];
+  //       const friendNames = [];
 
-        const chatsToOrder = [...chats];
-        const orderedChats = chatsToOrder.sort(
-          (a, b) =>
-            b.messages[b.messages.length - 1].timestamp -
-            a.messages[a.messages.length - 1].timestamp
-        );
+  //       const chatsToOrder = [...chats];
+  //       const orderedChats = chatsToOrder.sort(
+  //         (a, b) =>
+  //           b.messages[b.messages.length - 1].timestamp -
+  //           a.messages[a.messages.length - 1].timestamp
+  //       );
 
-        for (let chat of orderedChats) {
-          for (let user of chat.users) {
-            console.log(user);
-            if (user !== this.props.userEmail) {
-              friendEmails.push(user);
-            }
-            // if (this.)
-          }
-          // console.log("chat2 = ", chat);
-        }
-        // console.log("friendNames =", friendEmails);
+  //       for (let chat of orderedChats) {
+  //         for (let user of chat.users) {
+  //           console.log(user);
+  //           if (user !== this.props.userEmail) {
+  //             friendEmails.push(user);
+  //           }
+  //           // if (this.)
+  //         }
+  //         // console.log("chat2 = ", chat);
+  //       }
+  //       // console.log("friendNames =", friendEmails);
 
-        for (let email of friendEmails) {
-          await firebase
-            .firestore()
-            .collection("users")
-            .doc(email)
-            .get()
-            .then((doc) => {
-              const data = doc.data();
-              // console.log(`name = ${data.firstName} ${data.lastName}`);
-              const name = data.firstName + " " + data.lastName;
-              console.log(`name = ${name}`);
-              friendNames.push(name);
-            });
-        }
+  //       for (let email of friendEmails) {
+  //         await firebase
+  //           .firestore()
+  //           .collection("users")
+  //           .doc(email)
+  //           .get()
+  //           .then((doc) => {
+  //             const data = doc.data();
+  //             // console.log(`name = ${data.firstName} ${data.lastName}`);
+  //             const name = data.firstName + " " + data.lastName;
+  //             console.log(`name = ${name}`);
+  //             friendNames.push(name);
+  //           });
+  //       }
 
-        console.log("friendNames = ", friendNames);
+  //       console.log("friendNames = ", friendNames);
 
-        this.setState({ friendNames });
+  //       this.setState({ friendNames });
 
-        // convert indices
+  //       // convert indices
 
-        // chats.findIndex((element) => element === orderedChats[_index]);
+  //       // chats.findIndex((element) => element === orderedChats[_index]);
 
-        // this.setState({friendNames});
-      });
+  //       // this.setState({friendNames});
+  //     });
 
-    //re-run this every time chats changes
-    //calculate based on orderChats instead of chats so the views match up
-  };
+  //   //re-run this every time chats changes
+  //   //calculate based on orderChats instead of chats so the views match up
+  // };
 
   calculateNumberUnread = (chat, user) => {
     let count = 0;

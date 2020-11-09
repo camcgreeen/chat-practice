@@ -20,7 +20,7 @@ class DashboardComponent extends React.Component {
       chats: [],
       online: false,
       friendOnline: false,
-      lastLoggedOut: "",
+      lastLoggedOut: null,
       friendLastLoggedOut: "",
       friendFirstName: null,
       friendLastName: null,
@@ -84,7 +84,7 @@ class DashboardComponent extends React.Component {
   }
 
   signOut = () => {
-    // console.log("SIGNING OUT");
+    console.log("SIGNING OUT of account", this.state.email);
     this.setState({ lastLoggedOut: Date.now() }, async () => {
       await firebase
         .firestore()
@@ -404,6 +404,7 @@ class DashboardComponent extends React.Component {
           this.props.history.push("/login");
         });
       } else {
+        console.log("state = ", this.state);
         // where is the query that asks for the document where the user's email is stored
         // onSnapshot() is a method that is called whenever the database document is updated
         // it returns a promise as server is involved which we can use async await with
@@ -413,6 +414,7 @@ class DashboardComponent extends React.Component {
           .where("users", "array-contains", _usr.email)
           .onSnapshot(async (res) => {
             const chats = res.docs.map((_doc) => _doc.data());
+            console.log("CHATS FROM SNAPSHOT =", chats);
             await this.setState(
               () => ({
                 email: _usr.email,
@@ -446,6 +448,7 @@ class DashboardComponent extends React.Component {
                     (element) => element === orderedChats[0]
                   );
                   // console.log("startIndex = ", startIndex);
+                  console.log("STATE IS = ", this.state);
                   this.selectChat(startIndex);
                 }
               }

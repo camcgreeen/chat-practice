@@ -155,7 +155,10 @@ class SignupComponent extends React.Component {
     // this is the firebase authentication bit
     firebase
       .auth()
-      .createUserWithEmailAndPassword(this.state.email, this.state.password)
+      .createUserWithEmailAndPassword(
+        this.state.email.toLowerCase(),
+        this.state.password
+      )
       .then(
         (authRes) => {
           // console.log(authRes.user);
@@ -171,7 +174,7 @@ class SignupComponent extends React.Component {
             email: authRes.user.email,
             firstName: this.state.firstName,
             lastName: this.state.lastName,
-            lastloggedOut: "",
+            lastLoggedOut: null,
             online: false,
           };
           // this is the bit where we add the user to our database
@@ -179,7 +182,7 @@ class SignupComponent extends React.Component {
           firebase
             .firestore()
             .collection("users")
-            .doc(this.state.email)
+            .doc(this.state.email.toLowerCase())
             .set(userObj)
             .then(
               () => {

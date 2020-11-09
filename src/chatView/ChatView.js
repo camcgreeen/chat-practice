@@ -67,10 +67,12 @@ class ChatViewComponent extends React.Component {
               // </div>
             }
             {/* Your conversation with{" "} */}
+            {/* {chat.users.filter((_user) => _user !== user)[0]} */}
+            {this.getFriendName(chat, user)}
             {/* {chat.users.filter((_usr) => _usr !== user)[0]} */}
             {/* {this.getUserInfo(this.props.friend)} */}
             {/* {this.state.friendFirstName + " " + this.state.friendLastName} */}
-            {this.props.friendFirstName + " " + this.props.friendLastName}
+            {/* {this.props.friendFirstName + " " + this.props.friendLastName} */}
             {}
             {/* {/* {this.props.friendOnline ? " | online" : this.props.lastLoggedOut} */}
             {this.props.friendOnline
@@ -102,7 +104,11 @@ class ChatViewComponent extends React.Component {
                       {/* {this.convertChatViewTimestamp(_msg.timestamp) + ": "} */}
                       {_msg.gifRef === null ? (
                         this.checkUrl(_msg.message) ? (
-                          <a href={_msg.message} target="_blank">
+                          <a
+                            href={_msg.message}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
                             {_msg.message}
                           </a>
                         ) : (
@@ -174,6 +180,12 @@ class ChatViewComponent extends React.Component {
     setTimeout(this.getUserInfo, 2000);
   };
 
+  getFriendName = (chat, user) => {
+    if (chat && user) {
+      return chat.users.filter((_user) => _user !== user)[0];
+    }
+  };
+
   findMostRecentMessageIndex = (messages, user) => {
     for (let i = messages.length - 1; i >= 0; i--) {
       if (messages[i].receiverRead && messages[i].sender === user) {
@@ -182,34 +194,34 @@ class ChatViewComponent extends React.Component {
     }
   };
 
-  updateUserInfo = () => {
-    this.props.updateUserInfoFn();
-    // if (friend) {
-    // firebase
-    //   .firestore()
-    //   .collection("users")
-    //   .doc(friend)
-    //   .get()
-    //   .then((doc) => {
-    //     console.log("getting user data...");
-    //     const data = doc.data();
-    //     console.log(`data for user ${friend} =`, data);
-    //     this.setState({
-    //       friendFirstName: data.firstName,
-    //       friendLastName: data.lastName,
-    //     });
-    //     // return [data.firstName, data.lastName];
-    //     // this.setState({ firstName: data.firstName, lastName: data.lastName });
-    //   });
-    // }
-    firebase
-      .firestore()
-      .collection("users")
-      .onSnapshot((res) => {
-        const users = res.docs.map((_doc) => _doc.data());
-        console.log("users =", users);
-      });
-  };
+  // updateUserInfo = () => {
+  //   this.props.updateUserInfoFn();
+  //   // if (friend) {
+  //   // firebase
+  //   //   .firestore()
+  //   //   .collection("users")
+  //   //   .doc(friend)
+  //   //   .get()
+  //   //   .then((doc) => {
+  //   //     console.log("getting user data...");
+  //   //     const data = doc.data();
+  //   //     console.log(`data for user ${friend} =`, data);
+  //   //     this.setState({
+  //   //       friendFirstName: data.firstName,
+  //   //       friendLastName: data.lastName,
+  //   //     });
+  //   //     // return [data.firstName, data.lastName];
+  //   //     // this.setState({ firstName: data.firstName, lastName: data.lastName });
+  //   //   });
+  //   // }
+  //   firebase
+  //     .firestore()
+  //     .collection("users")
+  //     .onSnapshot((res) => {
+  //       const users = res.docs.map((_doc) => _doc.data());
+  //       console.log("users =", users);
+  //     });
+  // };
 
   listenForTyping = () => {
     firebase
@@ -313,6 +325,11 @@ class ChatViewComponent extends React.Component {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     return urlRegex.test(text);
   };
+
+  // convertUrl = (text) => {
+  //   const urlRegex = /(https?:\/\/[^\s]+)/g;
+  //   return text.replaceAll(urlRegex, )
+  // }
 
   convertChatViewTimestamp = (timestamp) => {
     if (timestamp) {
